@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  google_id           String  @unique
+  email               String  @unique
+  user_information_id String?
+
+  user_information UserInformation? @relation(fields: [user_information_id], references: [id])
+  posts            Post[]
+  comments         Comment[]
+  likes            Like[]
+}
+
+model UserInformation {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  display_name String?
+
+  user User[]
+}
+
+model Post {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  content   String
+  concern   String
+  course    String
+  user_id   String
+  anonymous Boolean @default(false)
+
+  user     User?     @relation(fields: [user_id], references: [id])
+  comments Comment[]
+  likes    Like[]
+}
+
+model Comment {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id String
+  post_id String
+
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+}
+
+model Like {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+
+  user_id String
+  post_id String
+
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+}
