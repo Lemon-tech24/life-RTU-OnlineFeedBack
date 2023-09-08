@@ -1,11 +1,15 @@
 import { Router } from 'express';
-import { validate, wrapper } from '@jmrl23/express-helper';
+import { validate, vendors, wrapper } from '@jmrl23/express-helper';
 import { UserService } from '../services/user.service';
 import { UserCreateDto } from '../dtos/user/create.dto';
 import { UserUpdateDto } from '../dtos/user/update.dto';
 import { UserReadDto } from '../dtos/user/read.dto';
 import { UserListDto } from '../dtos/user/list.dto';
 import { UserDeleteDto } from '../dtos/user/delete.dto';
+import {
+  AuthorizationType,
+  authorizationMiddleware,
+} from '../middlewares/authorization.middleware';
 
 export const controller = Router();
 
@@ -34,6 +38,8 @@ controller
       };
     }),
   )
+
+  .use(authorizationMiddleware(AuthorizationType.WITH_USER))
 
   .get(
     '/read/:id',
@@ -67,6 +73,12 @@ controller
     '/update',
     validate('BODY', UserUpdateDto),
     wrapper(async function (request) {
+      if (request.user && request.user !== request.body.id) {
+        throw new vendors.httpErrors.Unauthorized(
+          "Cannot modify other user's data",
+        );
+      }
+
       const userService = await UserService.getInstance();
       const user = await userService.userUpdate(request.body);
 
@@ -80,6 +92,12 @@ controller
     '/delete/:id',
     validate('PARAMS', UserDeleteDto),
     wrapper(async function (request) {
+      if (request.user && request.user !== request.body.id) {
+        throw new vendors.httpErrors.Unauthorized(
+          "Cannot delete other user's data",
+        );
+      }
+
       const userService = await UserService.getInstance();
       const user = await userService.userDelete(
         request.params as unknown as UserDeleteDto,
