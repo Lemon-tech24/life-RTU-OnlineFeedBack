@@ -25,6 +25,17 @@ controller
   )
 
   .get(
+    '/session',
+    wrapper(function (request) {
+      const user = request.user ?? null;
+
+      return {
+        user,
+      };
+    }),
+  )
+
+  .get(
     '/read/:id',
     validate('PARAMS', UserReadDto),
     wrapper(async function (request) {

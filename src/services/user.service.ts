@@ -6,6 +6,7 @@ import { UserListDto } from '../dtos/user/list.dto';
 import { UserUpdateDto } from '../dtos/user/update.dto';
 import { UserDeleteDto } from '../dtos/user/delete.dto';
 import type { UserWithPostsLikesAndComments } from '../types/user';
+import { JwtService } from './jwt.service';
 
 export class UserService {
   private static instance: UserService;
@@ -13,6 +14,7 @@ export class UserService {
   private constructor(
     private readonly cacheService: CacheService,
     private readonly prismaService: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
 
   public static async getInstance(): Promise<UserService> {
@@ -20,6 +22,7 @@ export class UserService {
       const instance = new UserService(
         await CacheService.getInstance(),
         await PrismaService.getInstance(),
+        await JwtService.getInstance(),
       );
 
       UserService.instance = instance;
@@ -86,6 +89,20 @@ export class UserService {
     if (user) {
       await cacheManager.set(cacheKey, user);
     }
+
+    return user;
+  }
+
+  public async userReadByToken(
+    token: string,
+  ): Promise<UserWithPostsLikesAndComments | null> {
+    const jwtResult = this.jwtService.verify<{ id: string }>(token);
+
+    if (!jwtResult?.id) {
+      return null;
+    }
+
+    const user = await this.userRead({ id: jwtResult.id });
 
     return user;
   }
