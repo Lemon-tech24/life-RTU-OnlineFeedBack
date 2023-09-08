@@ -12,7 +12,7 @@ import {
 import passport from 'passport';
 import { prismaError as PrismaError } from 'prisma-better-errors';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { userMiddleware } from './middlewares/user.middleward';
+import { userMiddleware } from './middlewares/user.middleware';
 
 const app = express();
 
