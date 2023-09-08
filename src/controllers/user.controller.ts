@@ -4,6 +4,7 @@ import { UserService } from '../services/user.service';
 import { UserCreateDto } from '../dtos/user/create.dto';
 import { UserUpdateDto } from '../dtos/user/update.dto';
 import { UserReadDto } from '../dtos/user/read.dto';
+import { UserListDto } from '../dtos/user/list.dto';
 import { UserDeleteDto } from '../dtos/user/delete.dto';
 
 export const controller = Router();
@@ -40,7 +41,7 @@ controller
 
   .post(
     '/list',
-    validate('BODY', UserUpdateDto),
+    validate('BODY', UserListDto),
     wrapper(async function (request) {
       const userService = await UserService.getInstance();
       const users = await userService.userList(request.body);

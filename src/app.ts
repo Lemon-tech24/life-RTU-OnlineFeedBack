@@ -9,11 +9,15 @@ import {
   wrapper,
   vendors,
 } from '@jmrl23/express-helper';
+import passport from 'passport';
+import { prismaError as PrismaError } from 'prisma-better-errors';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 const app = express();
 
 // middlewares
 app.use(
+  passport.initialize(),
   morganMiddleware(),
   corsMiddleware({ origin: '*' }),
   express.json(),
@@ -42,9 +46,25 @@ app.use(
       `Cannot ${request.method} ${request.path}`,
     );
   }),
+  // custom error handlers
   errorHandler(
-    // custom error handler
+    (error, _request, _response, next) => {
+      if (error instanceof PrismaClientKnownRequestError) {
+        error = new PrismaError(error);
+      }
+
+      next(error);
+    },
     (error, _request, response, next) => {
+      if (!(error instanceof vendors.httpErrors.HttpError)) {
+        if ('statusCode' in error && typeof error.statusCode === 'number') {
+          error = vendors.httpErrors.createHttpError(
+            error.statusCode,
+            error.message,
+          );
+        }
+      }
+
       if (error instanceof vendors.httpErrors.HttpError) {
         const data = {
           statusCode: error.statusCode,
